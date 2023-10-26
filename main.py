@@ -1,7 +1,7 @@
 import requests
 
 # User input for the location
-location = 'Bergen'
+location = 'Cape Town'
 
 # Dictionary mapping weather icon codes to emojis
 icon_to_emoji = {
