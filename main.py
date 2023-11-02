@@ -1,11 +1,35 @@
 import requests
+import numpy as np
 from stl import mesh
 from emoji_dict import icon_to_emoji
 
 # User input for the location
 location = 'Oslo'
 
+# Define vertices and faces for a simple sun icon
+sun_icon_vertices = np.array([
+    [0, 0, 0],
+    [1, 0, 0],
+    [1, 1, 1],
+])
 
+sun_icon_faces = np.array([
+    [0, 1, 2]
+])
+
+# Create a function to generate and export the 3D model
+def create_stl_from_icon(icon_code, filename):
+    # Convert faces to a NumPy array
+    faces = sun_icon_faces.astype(np.uint32)
+
+    # Create a mesh
+    weather_icon_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+    for i, f in enumerate(faces):
+        for j in range(3):
+            weather_icon_mesh.vectors[i][j] = sun_icon_vertices[f[j]]
+
+    # Export the mesh as an STL file
+    weather_icon_mesh.save(filename)
 # First script to obtain latitude and longitude
 def get_coordinates(location):
     url = 'https://api.geoapify.com/v1/geocode/search'
@@ -48,7 +72,7 @@ if coordinates:
 
         # Convert the icon code to emoji
         if weather_icon in icon_to_emoji:
-            weather_emoji = icon_to_emoji[weather_icon]
+            weather_emoji = icon_to_emoji[weather_icon]  # Corrected this line
         else:
             weather_emoji = "❓"  # Use a question mark emoji for unknown icons
 
@@ -57,11 +81,10 @@ if coordinates:
         print(f"Longitude: {lon}")
         print(f"Temperature (Celsius): {temperature_celsius}°C")
         print(f"Weather Icon: {weather_emoji}")
+
+        # Generate and export the 3D models
+        create_stl_from_icon(weather_icon, 'stl_lib/weather_icon.STL')
     else:
-        print("Error retrieving weather information.")
+        print("Error retrieving weather information")
 else:
-    print("Location data not found in the response.")
-
-
-
-
+    print("Location data not found in the response")
