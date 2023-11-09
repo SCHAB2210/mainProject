@@ -4,7 +4,10 @@ import os
 from datetime import datetime
 import cadquery as cq
 from emoji_dict import icon_to_emoji
-import pythreejs as p3
+from scipy.spatial import Delaunay
+import matplotlib.pyplot as plt
+import subprocess
+
 
 # First script to obtain latitude and longitude
 def get_coordinates(location):
@@ -32,26 +35,18 @@ def get_weather(lon, lat):
     else:
         return "Error retrieving weather information"
 
+# Function to scale points
+def scale_points(points, factor):
+    return [(point[0] * factor, point[1] * factor) for point in points]
+
 # Function to preview the STL file in a 3D window
+# Function to preview the STL file using the default system viewer on Windows
 def preview_stl(stl_filename):
-    # Load the STL file
-    geometry = p3.STLLoader().load(stl_filename)
-
-    # Create a scene with the loaded geometry
-    scene = p3.Scene(children=[p3.Mesh(geometry)])
-
-    # Create a perspective camera
-    camera = p3.PerspectiveCamera(position=[0, 0, 10], up=[0, 1, 0], aspect=1)
-
-    # Create a renderer
-    renderer = p3.Renderer(camera=camera, scene=scene, controls=[p3.OrbitControls(controlling=camera)])
-
-    # Create a window to display the 3D view
-    preview_window = p3.Viewer(renderers=[renderer])
-
-    # Show the preview window
-    preview_window.show()
-
+    # Open the STL file using the default system viewer on Windows
+    try:
+        subprocess.run(['start', stl_filename], check=True, shell=True)
+    except subprocess.CalledProcessError:
+        print(f"Failed to open {stl_filename}. Please use an external viewer.")
 # Create the main window
 window = tk.Tk()
 window.title("Weather & STL Generator")
@@ -126,36 +121,35 @@ def create_stl_from_icon(icon_code, city_name):
 
     # Add geometry for the emoji based on the icon_code
     if icon_code == '01d':  # Sunny
-        # Example: Draw a sun
+        # Draw a sun
         workplane.circle(emoji_size)
 
     elif icon_code == '02d':  # Partly cloudy
-        # Example: Draw a sun
+        # Draw a sun
         workplane.circle(emoji_size)
 
-        # Create a cloud workplane
-        cloud_workplane = cq.Workplane("XY")
-        cloud_workplane.circle(emoji_size / 2)
-
-        # Translate and combine the cloud with the main workplane
-        workplane = workplane.translate((0, 0, emoji_size / 2)).add(cloud_workplane)
+        # Draw a cloud next to the sun
+        cloud_workplane = cq.Workplane("XY").circle(emoji_size / 2).translate((emoji_size * 1.5, 0, 0))
+        workplane = workplane.union(cloud_workplane)
 
     elif icon_code == '13d':  # Snowy
-        # Example: Draw a snowflake
-        workplane.circle(emoji_size / 3)
+        # Draw a snowflake
         snowflake_workplane = cq.Workplane("XY")
-        snowflake_workplane.circle(emoji_size / 3)
-
-        # Translate and combine the snowflake with the main workplane
-        workplane = workplane.translate((0, 0, emoji_size / 3)).add(snowflake_workplane)
+        for _ in range(6):
+            snowflake_workplane.moveTo(0, 0).circle(emoji_size / 3).rotate((0, 0, 0), (0, 0, 1), 60 * _)
+        workplane = workplane.union(snowflake_workplane)
 
     elif icon_code == '03d':  # Cloudy
-        # Example: Draw a cloud
+        # Draw a cloud
         cloud_workplane = cq.Workplane("XY")
-        cloud_workplane.circle(emoji_size / 2)
+        for _ in range(5):
+            cloud_workplane = cloud_workplane.circle(emoji_size / 2).translate((0, 0, emoji_size / 5))
+        workplane = workplane.union(cloud_workplane)
 
-        # Combine the cloud with the main workplane
-        workplane = workplane.add(cloud_workplane)
+    elif icon_code == '09d' or icon_code == '10d':  # Rain
+        # Draw raindrops
+        for _ in range(5):
+            workplane = workplane.circle(emoji_size / 8).translate((0, 0, emoji_size / 5))
 
     else:
         # Default emoji for unknown weather condition
@@ -169,4 +163,8 @@ def create_stl_from_icon(icon_code, city_name):
     stl_filename = f"{stl_directory}/{city_name}_{now}.STL"
 
     # Export the CadQuery 3D model as an STL file
-    cq.exporters
+    cq.exporters.export(emoji_3d, stl_filename)
+
+    return stl_filename
+# Start the main event loop
+window.mainloop()
