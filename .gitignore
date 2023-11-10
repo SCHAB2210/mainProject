@@ -1,3 +1,7 @@
 *.STL
 # Enterprise Architect files
 # *.eapx
+
+__pycache__/
+.idea/
+venv/
