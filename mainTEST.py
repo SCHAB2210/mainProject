@@ -126,7 +126,7 @@ def create_stl_from_icon(icon_code, city_name):
 
     elif icon_code == '02d':  # Partly cloudy
         # Draw a sun
-        workplane.circle(emoji_size)
+        workplane.sphere(emoji_size)
 
         # Draw a cloud next to the sun
         cloud_workplane = cq.Workplane("XY").circle(emoji_size / 2).translate((emoji_size * 1.5, 0, 0))
