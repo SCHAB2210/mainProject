@@ -1,3 +1,0 @@
-*.STL
-# Enterprise Architect files
-# *.eapx
