@@ -7,6 +7,7 @@ from emoji_dict import icon_to_emoji
 from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
 import subprocess
+import math
 
 
 # First script to obtain latitude and longitude
@@ -121,42 +122,61 @@ def create_stl_from_icon(icon_code, city_name):
 
     # Add geometry for the emoji based on the icon_code
     if icon_code == '01d':  # Sunny
-        # Draw a sun
-        workplane.circle(emoji_size)
+        # Draw a sun with short lines radiating around the circle
+        sun = cq.Workplane("XY")
+        sun = sun.circle(emoji_size)
 
-    elif icon_code == '02d':  # Partly cloudy
-        # Draw a sun
-        workplane.sphere(emoji_size)
+        # Create short lines radiating from the center, touching the circle
+        for i in range(12):
+            angle_rad = math.radians(30 * i)
+            sun = sun.moveTo(emoji_size * math.cos(angle_rad), emoji_size * math.sin(angle_rad)).circle(0.5)
 
-        # Draw a cloud next to the sun
-        cloud_workplane = cq.Workplane("XY").circle(emoji_size / 2).translate((emoji_size * 1.5, 0, 0))
-        workplane = workplane.union(cloud_workplane)
+        emoji_3d = sun.extrude(1.0)
+
+    elif icon_code in ['02d', '03d', '04d']:  # Cloudy
+        # Draw a Cloud with filled circles
+        cloud = (
+            cq.Workplane("XY")
+            .circle(10).moveTo(0, 0)
+            .circle(10).moveTo(10, 0)
+            .circle(10).moveTo(20, 0)
+        )
+        emoji_3d = cloud.extrude(1.0)
+
+    elif icon_code in ['09d', '10d', '11d']:  # Rain
+        # Draw a Rain with filled circles
+        raindrop = (
+            cq.Workplane("XY")
+            .circle(5).extrude(1.0)  # Circle at the top
+            .moveTo(0, 0).circle(2).mirrorY().extrude(1.0)  # Smaller circle at the bottom
+        )
+        emoji_3d = raindrop
 
     elif icon_code == '13d':  # Snowy
-        # Draw a snowflake
-        snowflake_workplane = cq.Workplane("XY")
-        for _ in range(6):
-            snowflake_workplane.moveTo(0, 0).circle(emoji_size / 3).rotate((0, 0, 0), (0, 0, 1), 60 * _)
-        workplane = workplane.union(snowflake_workplane)
+        # Draw a snowflake with filled circles
+        snowflake = cq.Workplane("XY")
+        # Create six lines radiating from the center with filled circles, touching the circle
+        for i in range(6):
+            angle_rad = math.radians(60 * i)
+            snowflake = snowflake.moveTo(emoji_size * math.cos(angle_rad), emoji_size * math.sin(angle_rad)).circle(2)
 
-    elif icon_code == '03d':  # Cloudy
-        # Draw a cloud
-        cloud_workplane = cq.Workplane("XY")
-        for _ in range(5):
-            cloud_workplane = cloud_workplane.circle(emoji_size / 2).translate((0, 0, emoji_size / 5))
-        workplane = workplane.union(cloud_workplane)
+        # Create six smaller circles at the end of each line with filled circles, touching the circle
+        for i in range(6):
+            angle_rad = math.radians(60 * i)
+            snowflake = snowflake.moveTo((emoji_size + 5) * math.cos(angle_rad), (emoji_size + 5) * math.sin(angle_rad)).circle(1)
 
-    elif icon_code == '09d' or icon_code == '10d':  # Rain
-        # Draw raindrops
-        for _ in range(5):
-            workplane = workplane.circle(emoji_size / 8).translate((0, 0, emoji_size / 5))
+        emoji_3d = snowflake.extrude(1.0)
 
     else:
-        # Default emoji for unknown weather condition
-        workplane.circle(emoji_size / 2)
-
-    # Extrude the emoji to create a 3D model
-    emoji_3d = workplane.extrude(1.0)
+        # Default emoji for unknown weather condition with filled circles
+        question_mark = (
+            cq.Workplane("XY")
+            .circle(5).extrude(1.0)  # Circle at the top
+            .moveTo(0, 0).circle(2).extrude(1.0)  # Smaller circle at the bottom
+            .moveTo(0, 0).circle(1.5).extrude(1.0)  # Even smaller circle at the bottom
+            .moveTo(0, 0).rect(2, 12).extrude(1.0)  # Vertical line in the middle
+        )
+        emoji_3d = question_mark
 
     # Generate a unique filename using city name and date and time
     now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -166,5 +186,8 @@ def create_stl_from_icon(icon_code, city_name):
     cq.exporters.export(emoji_3d, stl_filename)
 
     return stl_filename
+
+
+
 # Start the main event loop
 window.mainloop()
