@@ -137,20 +137,54 @@ def create_stl_from_icon(icon_code, city_name):
         # Draw a Cloud with filled circles
         cloud = (
             cq.Workplane("XY")
-            .circle(10).moveTo(0, 0)
-            .circle(10).moveTo(10, 0)
+            #.circle(10).center(0, 0)
+            .circle(12).moveTo(10, 10)
             .circle(10).moveTo(20, 0)
+            .circle(10).moveTo(0, 20)
         )
+
         emoji_3d = cloud.extrude(1.0)
 
     elif icon_code in ['09d', '10d', '11d']:  # Rain
-        # Draw a Rain with filled circles
+
+        # Parameters
+
+        ball_diameter = 30  # Diameter of the ball
+
+        triangle_side = ball_diameter  # Side length of the triangle
+
+        line_length = 60  # Length of the line from AB to C
+
+        # Create the raindrop shape
+
         raindrop = (
+
             cq.Workplane("XY")
-            .circle(5).extrude(1.0)  # Circle at the top
-            .moveTo(0, 0).circle(2).mirrorY().extrude(1.0)  # Smaller circle at the bottom
+
+            .circle(ball_diameter / 2)  # Circular bottom
+
+            .moveTo(-triangle_side / 2, 0)
+
+            .circle(triangle_side / 2)  # Triangular top
+
+            .mirrorY()
+
+            .extrude(0.1)  # Extrude a small amount to create a solid for lofting
+
+            .faces(">Z")  # Select the top face
+
+            .workplane()  # Create a new workplane on the top face
+
+            .circle(ball_diameter / 2)  # Create a circle on the top face
+
+            .extrude(line_length)  # Extrude to complete the raindrop shape
+
         )
-        emoji_3d = raindrop
+
+        emoji_3d = raindrop.extrude(1.0)
+
+
+
 
     elif icon_code == '13d':  # Snowy
         # Draw a snowflake with filled circles
