@@ -19,5 +19,3 @@ icon_to_emoji = {
     "50d": "🌫️",  # Mist (day)
     "50n": "🌫️",  # Mist (night)
 }
-
-
