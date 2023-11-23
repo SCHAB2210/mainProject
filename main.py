@@ -13,7 +13,7 @@ def get_coordinates(location):
     url = 'https://api.geoapify.com/v1/geocode/search'
     params = dict(
         text=location,
-        apiKey='fa45cefd445b4a24b395696597c7f6a3'  # Replace with your actual API key
+        apiKey='fa45cefd445b4a24b395696597c7f6a3'
     )
     resp = requests.get(url=url, params=params)
     data = resp.json()
@@ -23,7 +23,7 @@ def get_coordinates(location):
     else:
         return None
 
-# Second script to get weather information with switched lat and lon
+# Second script to get weather information
 def get_weather(lon, lat):
     api_key = "bebddd365caebcd2e486c63d5a6a57f4"  # Replace with your actual API key
     url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
@@ -33,10 +33,6 @@ def get_weather(lon, lat):
         return data
     else:
         return "Error retrieving weather information"
-
-# Function to scale points
-def scale_points(points, factor):
-    return [(point[0] * factor, point[1] * factor) for point in points]
 
 # Function to preview the STL file in a 3D window
 def preview_stl(stl_filename):
@@ -143,7 +139,7 @@ def create_stl_from_icon(icon_code, city_name):
         # Create short lines radiating from the center, touching the circle
         for i in range(12):
             angle_rad = math.radians(30 * i)
-            sun = sun.moveTo(emoji_size * math.cos(angle_rad), emoji_size * math.sin(angle_rad)).circle(0.5)
+            sun = sun.moveTo(emoji_size * math.cos(angle_rad), emoji_size * math.sin(angle_rad)).rect(1,1)
 
         emoji_3d = sun.extrude(1.0)
 
